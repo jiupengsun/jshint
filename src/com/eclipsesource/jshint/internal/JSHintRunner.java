@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.eclipsesource.jshint.HTMLReport;
 import com.eclipsesource.jshint.JSHint;
 import com.eclipsesource.jshint.Problem;
 import com.eclipsesource.jshint.ProblemHandler;
@@ -44,8 +45,8 @@ public class JSHintRunner {
 	private Charset charset;
 	private File library;
 	private File outputFile;
+	private File configFile;
 	private JSHint jshint;
-	private Properties property;
 
 	public void run(String... args) {
 		try {
@@ -109,8 +110,7 @@ public class JSHintRunner {
 	private void loadJsFiles(File directory, List<File> files) {
 		File[] subFiles = directory.listFiles();
 		for (File f : subFiles) {
-			if (f.isFile() && f.getName().endsWith(".js")
-					&& !blackFiles.containsKey(f.getName())) {
+			if (f.isFile() && f.getName().endsWith(".js")) {
 				files.add(f);
 			} else if (f.isDirectory())
 				loadJsFiles(f, files);
@@ -148,23 +148,7 @@ public class JSHintRunner {
 	}
 
 	private void setConfiguration(String config) {
-		File Config = new File(config);
-		if (Config != null) {
-			property = new Properties();
-			try {
-				property.load(new FileReader(Config));
-				String blacklist;
-				if ((blacklist = property.getProperty(CONFIG_BLACKLIST)) != null) {
-					String[] blackfiles = blacklist.trim().split(" ");
-					for (String s : blackfiles)
-						blackFiles.put(s, s);
-					property.remove(CONFIG_BLACKLIST);
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+		configFile = new File(config);
 	}
 
 	private void setOutputFile(String output) {
@@ -199,6 +183,8 @@ public class JSHintRunner {
 
 	private void processFiles() throws IOException {
 		for (File file : files) {
+			if (blackFiles.containsKey(file.getName()))
+				continue;
 			String code = readFileContents(file);
 			ProblemHandler handler = new SysoutProblemHandler(file.getAbsolutePath(),
 					outputFile);
@@ -218,14 +204,28 @@ public class JSHintRunner {
 	 */
 	private void configureJSHint() {
 		JsonObject configuration = new JsonObject();
-		if (property != null) {
-			Iterator<String> propNames = property.stringPropertyNames().iterator();
-			while (propNames.hasNext()) {
-				String key = propNames.next();
-				configuration.add(key, property.getProperty(key));
+		if (configFile != null) {
+			Properties property = new Properties();
+			try {
+				property.load(new FileReader(configFile));
+				String blacklist;
+				if ((blacklist = property.getProperty(CONFIG_BLACKLIST)) != null) {
+					String[] blackfiles = blacklist.trim().split(" ");
+					for (String s : blackfiles)
+						blackFiles.put(s, s);
+					property.remove(CONFIG_BLACKLIST);
+					Iterator<String> propNames = property.stringPropertyNames()
+							.iterator();
+					while (propNames.hasNext()) {
+						String key = propNames.next();
+						configuration.add(key, property.getProperty(key));
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-
 		//configuration.add("undef", true);
 		//configuration.add("devel", true);
 		jshint.configure(configuration);
@@ -268,7 +268,7 @@ public class JSHintRunner {
 			this.outputFileName = outputFile;
 			try {
 				if (outputFile != null)
-					pw = new PrintWriter(new FileWriter(outputFileName));
+					pw = new PrintWriter(new FileWriter(outputFileName, true));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -294,4 +294,30 @@ public class JSHintRunner {
 
 	}
 
+	private static final class HTMLProblemHandler implements ProblemHandler {
+
+		private final String fileName;
+		private final File outputFile;
+
+		public HTMLProblemHandler(String fileName, File outputFile) {
+			this.fileName = fileName;
+			this.outputFile = outputFile;
+		}
+
+		@Override
+		public void handleProblem(Problem problem) {
+			// TODO Auto-generated method stub
+			int line = problem.getLine();
+			String message = "Problem in file " + fileName + " at line " + line + ": "
+					+ problem.getMessage();
+			HTMLReport.getInstance().insert(fileName, message);
+		}
+
+		@Override
+		public void destroy() {
+			// TODO Auto-generated method stub
+
+		}
+
+	}
 }
