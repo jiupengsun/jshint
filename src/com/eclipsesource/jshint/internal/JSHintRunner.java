@@ -15,8 +15,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,10 +35,12 @@ public class JSHintRunner {
 	private static final String PARAM_CHARSET = "--charset";
 	private static final String PARAM_CUSTOM_JSHINT = "--custom";
 	private static final String PARAM_CONFIGURATION = "--config";
+	private static final String PARAM_OUTPUTFILE = "--output";
 	private List<File> files;
 	private Charset charset;
 	private File library;
 	private File Config;
+	private File outputFile;
 	private JSHint jshint;
 
 	public void run(String... args) {
@@ -67,8 +71,10 @@ public class JSHintRunner {
 				setLibrary(arg);
 			} else if (PARAM_CONFIGURATION.equals(lastArg)) {
 				setConfiguration(arg);
+			} else if (PARAM_OUTPUTFILE.equals(lastArg)) {
+				setOutputFile(arg);
 			} else if (PARAM_CHARSET.equals(arg) || PARAM_CUSTOM_JSHINT.equals(arg)
-					|| PARAM_CONFIGURATION.equals(arg)) {
+					|| PARAM_CONFIGURATION.equals(arg) || PARAM_OUTPUTFILE.equals(arg)) {
 				// continue
 			} else {
 				//added by jiupeng
@@ -139,6 +145,10 @@ public class JSHintRunner {
 		Config = new File(config);
 	}
 
+	private void setOutputFile(String output) {
+		outputFile = new File(output);
+	}
+
 	private void ensureInputFiles() {
 		if (files.isEmpty()) {
 			throw new IllegalArgumentException("No input files");
@@ -168,8 +178,10 @@ public class JSHintRunner {
 	private void processFiles() throws IOException {
 		for (File file : files) {
 			String code = readFileContents(file);
-			ProblemHandler handler = new SysoutProblemHandler(file.getAbsolutePath());
+			ProblemHandler handler = new SysoutProblemHandler(file.getAbsolutePath(),
+					outputFile);
 			jshint.check(code, handler);
+			handler.destroy();
 		}
 	}
 
@@ -232,16 +244,35 @@ public class JSHintRunner {
 	private static final class SysoutProblemHandler implements ProblemHandler {
 
 		private final String fileName;
+		private File outputFileName;
+		private PrintWriter pw;
 
-		public SysoutProblemHandler(String fileName) {
+		public SysoutProblemHandler(String fileName, File outputFile) {
 			this.fileName = fileName;
+			this.outputFileName = outputFile;
+			try {
+				pw = new PrintWriter(new FileWriter(outputFileName));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		public void destroy() {
+			if (pw != null) {
+				pw.flush();
+				pw.close();
+				pw = null;
+			}
 		}
 
 		public void handleProblem(Problem problem) {
 			int line = problem.getLine();
-			String message = problem.getMessage();
-			System.out.println(
-					"Problem in file " + fileName + " at line " + line + ": " + message);
+			String message = "Problem in file " + fileName + " at line " + line + ": "
+					+ problem.getMessage();
+			System.out.println(message);
+			if (pw != null) {
+				pw.println(message);
+			}
 		}
 
 	}
