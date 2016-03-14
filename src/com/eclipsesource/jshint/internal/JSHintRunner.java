@@ -267,7 +267,8 @@ public class JSHintRunner {
 			this.fileName = fileName;
 			this.outputFileName = outputFile;
 			try {
-				pw = new PrintWriter(new FileWriter(outputFileName));
+				if (outputFile != null)
+					pw = new PrintWriter(new FileWriter(outputFileName));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
