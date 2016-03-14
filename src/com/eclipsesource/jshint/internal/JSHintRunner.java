@@ -21,8 +21,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import com.eclipsesource.jshint.JSHint;
@@ -36,12 +38,14 @@ public class JSHintRunner {
 	private static final String PARAM_CUSTOM_JSHINT = "--custom";
 	private static final String PARAM_CONFIGURATION = "--config";
 	private static final String PARAM_OUTPUTFILE = "--output";
+	private static final String CONFIG_BLACKLIST = "blackList";
 	private List<File> files;
+	private Map<String, String> blackFiles = new HashMap<String, String>();
 	private Charset charset;
 	private File library;
-	private File Config;
 	private File outputFile;
 	private JSHint jshint;
+	private Properties property;
 
 	public void run(String... args) {
 		try {
@@ -57,7 +61,8 @@ public class JSHintRunner {
 			System.out.println(
 					"Usage: JSHint [ <options> ] <input-file> [ <input-file> ... ]");
 			System.out.println("Options: --custom <custom-jshint-file>");
-			System.out.println("         --charset <charset>");
+			System.out.println("         --config <config-jshint.properties>");
+			System.out.println("         --output <output-report-file>");
 		}
 	}
 
@@ -104,7 +109,8 @@ public class JSHintRunner {
 	private void loadJsFiles(File directory, List<File> files) {
 		File[] subFiles = directory.listFiles();
 		for (File f : subFiles) {
-			if (f.isFile() && f.getName().endsWith(".js")) {
+			if (f.isFile() && f.getName().endsWith(".js")
+					&& !blackFiles.containsKey(f.getName())) {
 				files.add(f);
 			} else if (f.isDirectory())
 				loadJsFiles(f, files);
@@ -142,7 +148,23 @@ public class JSHintRunner {
 	}
 
 	private void setConfiguration(String config) {
-		Config = new File(config);
+		File Config = new File(config);
+		if (Config != null) {
+			property = new Properties();
+			try {
+				property.load(new FileReader(Config));
+				String blacklist;
+				if ((blacklist = property.getProperty(CONFIG_BLACKLIST)) != null) {
+					String[] blackfiles = blacklist.trim().split(" ");
+					for (String s : blackfiles)
+						blackFiles.put(s, s);
+					property.remove(CONFIG_BLACKLIST);
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private void setOutputFile(String output) {
@@ -196,20 +218,14 @@ public class JSHintRunner {
 	 */
 	private void configureJSHint() {
 		JsonObject configuration = new JsonObject();
-		if (Config != null) {
-			Properties property = new Properties();
-			try {
-				property.load(new FileReader(Config));
-				Iterator<String> propNames = property.stringPropertyNames().iterator();
-				while (propNames.hasNext()) {
-					String key = propNames.next();
-					configuration.add(key, property.getProperty(key));
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		if (property != null) {
+			Iterator<String> propNames = property.stringPropertyNames().iterator();
+			while (propNames.hasNext()) {
+				String key = propNames.next();
+				configuration.add(key, property.getProperty(key));
 			}
 		}
+
 		//configuration.add("undef", true);
 		//configuration.add("devel", true);
 		jshint.configure(configuration);
