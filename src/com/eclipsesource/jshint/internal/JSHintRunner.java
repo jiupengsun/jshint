@@ -173,6 +173,15 @@ public class JSHintRunner {
 		}
 	}
 
+	/**
+	 * 
+	 * 
+	 * 2016Äê3ÔÂ7ÈÕ
+	 * @author Jiupeng
+	 * @description
+	 * @reference load configuration file and load inside parameters
+	 * @interpretation
+	 */
 	private void configureJSHint() {
 		JsonObject configuration = new JsonObject();
 		if (Config != null) {
@@ -213,6 +222,13 @@ public class JSHintRunner {
 		}
 	}
 
+	/**
+	 * 
+	 * @author samparly
+	 * Handler: output the error message
+	 * user could define their own handler. e.g. output to files or database
+	 * output String to a well-formatted HTML
+	 */
 	private static final class SysoutProblemHandler implements ProblemHandler {
 
 		private final String fileName;
