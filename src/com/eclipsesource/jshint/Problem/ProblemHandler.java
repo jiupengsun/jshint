@@ -8,7 +8,7 @@
  * Contributors:
  *    Ralf Sternberg - initial implementation and API
  ******************************************************************************/
-package com.eclipsesource.jshint;
+package com.eclipsesource.jshint.Problem;
 
 /**
  * Implementations of this class are used to handle problems returned from JSHint.
@@ -23,14 +23,4 @@ public interface ProblemHandler {
 	 */
 	void handleProblem(Problem problem);
 
-	/**
-	 * 
-	 * 
-	 * 2016Äê3ÔÂ14ÈÕ
-	 * @author Jiupeng
-	 * @description to do some destroy work
-	 * @reference 
-	 * @interpretation
-	 */
-	void destroy();
 }

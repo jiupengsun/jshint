@@ -1,5 +1,6 @@
 package com.eclipsesource.jshint;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,9 +65,8 @@ public class HTMLReport {
 			}
 		}
 		//do not contain such child element
-		div.append("<div class='menuDiv'><h3><a href='#'></a></h3><ul></ul></div>");
-		div.getElementsByTag("a").get(0).text("+" + fileName);
-		div.getElementsByTag("ul").get(0).append("<li>" + message + "</li>");
+		div.append("<div class='menuDiv'><h3><a href='#'>" + "+" + fileName
+				+ "</a></h3><ul>" + "<li>" + message + "</li>" + "</ul></div>");
 	}
 
 	/**
@@ -78,7 +78,7 @@ public class HTMLReport {
 	 * @reference 
 	 * @interpretation
 	 */
-	public void flush(String outputFile) {
+	public void flush(File outputFile) {
 		if (document != null && outputFile != null) {
 			PrintWriter pw = null;
 			try {
@@ -97,7 +97,4 @@ public class HTMLReport {
 		}
 	}
 
-	public static void main(String[] args) {
-		HTMLReport.getInstance().flush("");
-	}
 }

@@ -25,6 +25,9 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.RhinoException;
 import org.mozilla.javascript.ScriptableObject;
 
+import com.eclipsesource.jshint.Problem.Problem;
+import com.eclipsesource.jshint.Problem.ProblemHandler;
+import com.eclipsesource.jshint.Problem.ProblemHandlerEx;
 import com.eclipsesource.jshint.internal.JSHintRunner;
 import com.eclipsesource.jshint.internal.ProblemImpl;
 import com.eclipsesource.json.JsonObject;
@@ -141,7 +144,7 @@ public class JSHint {
 		return check(new Text(code), handler);
 	}
 
-	public boolean check(String code, List<ProblemHandler> handlerList) {
+	public boolean check(String code, List<ProblemHandlerEx> handlerList) {
 		if (code == null) {
 			throw new NullPointerException("code is null");
 		}
@@ -173,7 +176,7 @@ public class JSHint {
 		return result;
 	}
 
-	public boolean check(Text text, List<ProblemHandler> handlerList) {
+	public boolean check(Text text, List<ProblemHandlerEx> handlerList) {
 		if (text == null) {
 			throw new NullPointerException("code is null");
 		}
@@ -253,7 +256,7 @@ public class JSHint {
 		}
 	}
 
-	private void handleProblems(List<ProblemHandler> handlerList, Text text) {
+	private void handleProblems(List<ProblemHandlerEx> handlerList, Text text) {
 		NativeArray errors = (NativeArray) jshint.get("errors", jshint);
 		long length = errors.getLength();
 		for (int i = 0; i < length; i++) {

@@ -15,10 +15,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,10 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.eclipsesource.jshint.HTMLReport;
 import com.eclipsesource.jshint.JSHint;
-import com.eclipsesource.jshint.Problem;
-import com.eclipsesource.jshint.ProblemHandler;
+import com.eclipsesource.jshint.Problem.FileOutProblemHandler;
+import com.eclipsesource.jshint.Problem.HTMLProblemHandler;
+import com.eclipsesource.jshint.Problem.ProblemHandlerEx;
+import com.eclipsesource.jshint.Problem.SysoutProblemHandler;
 import com.eclipsesource.json.JsonObject;
 
 public class JSHintRunner {
@@ -182,15 +181,26 @@ public class JSHintRunner {
 	}
 
 	private void processFiles() throws IOException {
+		List<ProblemHandlerEx> handlers = new ArrayList<ProblemHandlerEx>();
+		handlers.add(new SysoutProblemHandler());
+		if (this.outputFile != null) {
+			if (outputFile.getName().endsWith(".html")
+					|| outputFile.getName().endsWith(".htm")) {
+				handlers.add(new HTMLProblemHandler(outputFile));
+			} else
+				handlers.add(new FileOutProblemHandler(outputFile));
+		}
 		for (File file : files) {
+			// do not process files which are in the black list
 			if (blackFiles.containsKey(file.getName()))
 				continue;
 			String code = readFileContents(file);
-			ProblemHandler handler = new SysoutProblemHandler(file.getAbsolutePath(),
-					outputFile);
-			jshint.check(code, handler);
-			handler.destroy();
+			for (ProblemHandlerEx handler : handlers)
+				handler.setFileName(file.getName());
+			jshint.check(code, handlers);
 		}
+		for (ProblemHandlerEx handler : handlers)
+			handler.destroy();
 	}
 
 	/**
@@ -248,76 +258,5 @@ public class JSHintRunner {
 		} finally {
 			reader.close();
 		}
-	}
-
-	/**
-	 * 
-	 * @author samparly
-	 * Handler: output the error message
-	 * user could define their own handler. e.g. output to files or database
-	 * output String to a well-formatted HTML
-	 */
-	private static final class SysoutProblemHandler implements ProblemHandler {
-
-		private final String fileName;
-		private File outputFileName;
-		private PrintWriter pw;
-
-		public SysoutProblemHandler(String fileName, File outputFile) {
-			this.fileName = fileName;
-			this.outputFileName = outputFile;
-			try {
-				if (outputFile != null)
-					pw = new PrintWriter(new FileWriter(outputFileName, true));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		public void destroy() {
-			if (pw != null) {
-				pw.flush();
-				pw.close();
-				pw = null;
-			}
-		}
-
-		public void handleProblem(Problem problem) {
-			int line = problem.getLine();
-			String message = "Problem in file " + fileName + " at line " + line + ": "
-					+ problem.getMessage();
-			System.out.println(message);
-			if (pw != null) {
-				pw.println(message);
-			}
-		}
-
-	}
-
-	private static final class HTMLProblemHandler implements ProblemHandler {
-
-		private final String fileName;
-		private final File outputFile;
-
-		public HTMLProblemHandler(String fileName, File outputFile) {
-			this.fileName = fileName;
-			this.outputFile = outputFile;
-		}
-
-		@Override
-		public void handleProblem(Problem problem) {
-			// TODO Auto-generated method stub
-			int line = problem.getLine();
-			String message = "Problem in file " + fileName + " at line " + line + ": "
-					+ problem.getMessage();
-			HTMLReport.getInstance().insert(fileName, message);
-		}
-
-		@Override
-		public void destroy() {
-			// TODO Auto-generated method stub
-
-		}
-
 	}
 }

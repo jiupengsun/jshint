@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="lib/org.mozilla.javascript_1.7.5.v201504281450.jar" sourcepath="lib/org.mozilla.javascript.source_1.7.5.v201504281450.jar"/>
-	<classpathentry kind="lib" path="lib/jsoup-1.8.3.jar"/>
+	<classpathentry kind="lib" path="lib/org.mozilla.javascript_1.7.5.v201504281450.jar" sourcepath="C:/Users/samparly/.eclipse/org.eclipse.platform_4.5.1_1709980481_win32_win32_x86_64/plugins/org.mozilla.javascript.source_1.7.5.v201504281450.jar"/>
+	<classpathentry kind="lib" path="lib/jsoup-1.8.3.jar" sourcepath="C:/Users/samparly/Downloads/jsoup-1.8.3-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

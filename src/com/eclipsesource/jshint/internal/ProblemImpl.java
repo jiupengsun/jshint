@@ -10,7 +10,7 @@
  ******************************************************************************/
 package com.eclipsesource.jshint.internal;
 
-import com.eclipsesource.jshint.Problem;
+import com.eclipsesource.jshint.Problem.Problem;
 
 
 public class ProblemImpl implements Problem {
